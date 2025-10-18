@@ -1,0 +1,11 @@
+# venv & caches
+venv/
+__pycache__/
+*.pyc
+
+# local env & keys
+.env
+private_keys.json
+
+# data cache
+app/data/rebalance_latest.json

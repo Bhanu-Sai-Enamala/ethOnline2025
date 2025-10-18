@@ -1,0 +1,5 @@
+uagents
+uagents-core
+python-dotenv
+hyperon
+dotenv

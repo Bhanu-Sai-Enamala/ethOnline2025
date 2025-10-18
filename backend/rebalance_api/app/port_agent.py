@@ -102,7 +102,7 @@ from app.rebalance_models import RebalanceCheckRequest, RebalanceCheckResponse
 # --- Load environment ---
 load_dotenv()
 
-PORT = int(os.getenv("PORT", "8010"))
+PORT = int(os.getenv("PORT", "8011"))
 CLIENT_SEED = os.getenv("CLIENT_SEED", "ethOnlineseed")
 BALANCER_AGENT_ADDRESS = os.getenv("BALANCER_AGENT_ADDRESS", "").strip()
 USE_MAILBOX = str(os.getenv("USE_MAILBOX", "true")).lower() in ("1", "true", "yes", "y")
@@ -153,6 +153,7 @@ agent = Agent(
     seed=CLIENT_SEED,
     mailbox=USE_MAILBOX,
     publish_agent_details=True,
+    port=PORT
 )
 
 try:

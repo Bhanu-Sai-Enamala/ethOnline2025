@@ -132,7 +132,8 @@ cleanup() {
   done
   log "All processes stopped."
 }
-trap cleanup INT TERM EXIT
+# NOTE: macOS bash (3.2) doesn't support `wait -n`, so don't trap on EXIT.
+trap cleanup INT TERM
 
 start_reasoner
 sleep 1   # let reasoner register before API starts
@@ -151,7 +152,6 @@ echo '      -d "{\"usdc_balance\":450,\"usdt_balance\":350,\"quote_amount\":1.0,
 echo
 
 ### ─────────────────────────────────────────────────────────────────────────────
-### 5) Wait on children
+### 5) Wait on children  (portable: waits for all PIDs, works on macOS bash 3.2)
 ### ─────────────────────────────────────────────────────────────────────────────
-wait -n || true
-# trap/cleanup handles the rest
+wait "${pids[@]}" || true

@@ -1,0 +1,74 @@
+# knowledge.py
+# Minimal in-code MeTTa KB (no external .metta files)
+
+from typing import Optional, Dict
+from hyperon import MeTTa, E, S, ValueAtom
+
+def initialize_knowledge_graph(m: MeTTa) -> None:
+    """
+    Seed a tiny domain KB the agent can query for thresholds, policies,
+    and notable events. We avoid external .metta files to keep the repo
+    one-command runnable for judges.
+    """
+
+    sp = m.space()
+
+    # --- Policy knobs (numbers kept readable for judges) ---
+    # target base weight, max tilt from base (absolute), clamp bounds
+    sp.add_atom(E(S("tilt-base"),      ValueAtom(0.50)))
+    sp.add_atom(E(S("tilt-max"),       ValueAtom(0.10)))
+    sp.add_atom(E(S("weight-min"),     ValueAtom(0.20)))
+    sp.add_atom(E(S("weight-max"),     ValueAtom(0.80)))
+
+    # how much sentiment contributes when present (0..1)
+    sp.add_atom(E(S("sentiment-weight"), ValueAtom(0.30)))
+
+    # liquidity gate: if |quote-1.0| > threshold -> halve tilt
+    sp.add_atom(E(S("liq-gate-threshold"), ValueAtom(0.003)))
+
+    # regime thresholds based on worst combined risk
+    sp.add_atom(E(S("regime-threshold"), S("YELLOW"), ValueAtom(0.35)))
+    sp.add_atom(E(S("regime-threshold"), S("RED"),    ValueAtom(0.60)))
+
+    # --- Example knowledge of past stablecoin incidents (illustrative) ---
+    # These are not used directly in math yet, but demonstrate how we’d
+    # keep “explanations”/context the agent can cite in rationale.
+    sp.add_atom(E(S("event"), S("DAI_2020_03_12"), S("depeg")))
+    sp.add_atom(E(S("event-note"),
+                  S("DAI_2020_03_12"),
+                  ValueAtom("Black Thursday: market crash, auctions backlog, premium >1.02")))
+
+    sp.add_atom(E(S("event"), S("USDC_2023_03_SVB"), S("depeg")))
+    sp.add_atom(E(S("event-note"),
+                  S("USDC_2023_03_SVB"),
+                  ValueAtom("SVB exposure scare; rapid depeg/repeg over weekend")))
+
+def _first_number(m: MeTTa, pattern: str) -> Optional[float]:
+    """
+    Query a single numeric value from the KB.
+    Example: pattern = "(tilt-max ?x)"
+    """
+    try:
+        res = m.run(pattern)
+        if not res:
+            return None
+        # typical string form like: "(tilt-max 0.1)" or "[[(tilt-max 0.1)]]"
+        txt = str(res[0])
+        # Pick last token and strip trailing ')'
+        val = float(txt.replace(')', ' ').split()[-1])
+        return val
+    except Exception:
+        return None
+
+def read_policy(m: MeTTa) -> Dict[str, float]:
+    """Fetch all numeric policy values with safe fallbacks."""
+    return {
+        "tilt_base":          _first_number(m, "(tilt-base ?x)") or 0.50,
+        "tilt_max":           _first_number(m, "(tilt-max ?x)") or 0.10,
+        "weight_min":         _first_number(m, "(weight-min ?x)") or 0.20,
+        "weight_max":         _first_number(m, "(weight-max ?x)") or 0.80,
+        "sentiment_weight":   _first_number(m, "(sentiment-weight ?x)") or 0.30,
+        "liq_gate_threshold": _first_number(m, "(liq-gate-threshold ?x)") or 0.003,
+        "thr_yellow":         _first_number(m, "(regime-threshold YELLOW ?x)") or 0.35,
+        "thr_red":            _first_number(m, "(regime-threshold RED ?x)") or 0.60,
+    }

@@ -1,0 +1,90 @@
+# ────────────────────────────────
+# Global Python ignores
+# ────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Byte-compiled / optimized files
+*.so
+*.dll
+*.dylib
+
+# ────────────────────────────────
+# Virtual environments
+# ────────────────────────────────
+venv/
+.venv/
+ENV/
+env/
+*/venv/
+*/.venv/
+
+# ────────────────────────────────
+# Environment files
+# ────────────────────────────────
+.env
+*.env
+**/.env
+.envrc
+.env.local
+
+# Do NOT ignore example templates
+!**/.env.example
+
+# ────────────────────────────────
+# OS / Editor / IDE artifacts
+# ────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# ────────────────────────────────
+# Logs and cache
+# ────────────────────────────────
+*.log
+logs/
+*.pid
+*.seed
+*.jsonl
+*.sqlite
+*.db
+.cache/
+__pypackages__/
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# ────────────────────────────────
+# uAgents and Almanac cache
+# ────────────────────────────────
+agent_data/
+agents/*/__pycache__/
+agents/**/__pycache__/
+agents/**/agent*_data.json
+*.wallet
+*.pem
+*.key
+*.bak
+
+# ────────────────────────────────
+# MeTTa / Hyperon temporary files
+# ────────────────────────────────
+*.metta~
+*.meTTa~
+*.out
+*.log
+hyperon_cache/
+
+# ────────────────────────────────
+# Project specific
+# ────────────────────────────────
+backend/rebalance_api/app/data/rebalance_latest.json
+*.sqlite3

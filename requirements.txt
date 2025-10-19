@@ -1,0 +1,3 @@
+# root requirements.txt (pulls both subprojects)
+-r agents/sentiment_reasoner/requirements.txt
+-r backend/rebalance_api/requirements.txt

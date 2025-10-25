@@ -1,0 +1,69 @@
+{
+  "seq": 1,
+  "users": {
+    "1": {
+      "wallet_address": "0x9921c69349020575CB17A94Ed2871D9c2b4D3758",
+      "telegram_chat_id": "475651769",
+      "nickname": "Bhanu",
+      "is_active": true,
+      "daily_summary_hour_utc": 9,
+      "alert_threshold": "YELLOW",
+      "next_summary_at": "2025-10-25T09:00:00+00:00",
+      "last_alert_at": null,
+      "balances_json": {
+        "usdc_balance": 1200.0,
+        "usdt_balance": 800.0,
+        "dai_balance": 500.0,
+        "fdusd_balance": 300.0,
+        "busd_balance": 250.0,
+        "tusd_balance": 150.0,
+        "usdp_balance": 200.0,
+        "pyusd_balance": 100.0,
+        "usdd_balance": 400.0,
+        "gusd_balance": 100.0,
+        "quote_amount": 1000.0
+      },
+      "last_plan_json": {
+        "trade_deltas": {
+          "BUSD": 113.6,
+          "DAI": -136.4,
+          "FDUSD": 63.6,
+          "GUSD": 263.6,
+          "PYUSD": 263.6,
+          "TUSD": 213.6,
+          "USDC": -836.4,
+          "USDD": 145.2,
+          "USDP": 163.6,
+          "USDT": -254.8
+        },
+        "target_weights": {
+          "BUSD": 0.0909,
+          "DAI": 0.0909,
+          "FDUSD": 0.0909,
+          "GUSD": 0.0909,
+          "PYUSD": 0.0909,
+          "TUSD": 0.0909,
+          "USDC": 0.0909,
+          "USDD": 0.1363,
+          "USDP": 0.0909,
+          "USDT": 0.1363
+        },
+        "current_weights": {
+          "BUSD": 0.0625,
+          "DAI": 0.125,
+          "FDUSD": 0.075,
+          "GUSD": 0.025,
+          "PYUSD": 0.025,
+          "TUSD": 0.0375,
+          "USDC": 0.3,
+          "USDD": 0.1,
+          "USDP": 0.05,
+          "USDT": 0.2
+        },
+        "expected_quote": null
+      },
+      "last_rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Combined risks derived from peg\u2295sentiment. Regime=GREEN, liquidity gate applied if deviation>0.30%.",
+      "last_regime": "GREEN"
+    }
+  }
+}

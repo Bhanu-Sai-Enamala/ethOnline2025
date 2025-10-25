@@ -29,6 +29,7 @@ env/
 **/.env
 .envrc
 .env.local
+backend/rebalance_api/.env
 
 # Do NOT ignore example templates
 !**/.env.example

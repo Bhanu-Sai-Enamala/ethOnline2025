@@ -4,11 +4,10 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional
 
-from uagents import Agent, Context
+from uagents import Agent, Context, Model
 from uagents.setup import fund_agent_if_low
-from uagents import Model
 
-from telegram import Bot  # sending messages only (no polling)
+from telegram import Bot  # send-only usage
 
 # ───────────────────────────────────────────────────────────────
 # Config
@@ -17,11 +16,13 @@ AGENT_NAME = os.getenv("VAC_AGENT_NAME", "vacation-uagent")
 PORT = int(os.getenv("VAC_AGENT_PORT", "8091"))
 USE_MAILBOX = str(os.getenv("USE_MAILBOX", "true")).lower() in ("1", "true", "yes", "y")
 
-PORT_AGENT_URL = os.getenv("PORT_AGENT_URL", "http://127.0.0.1:8011/rebalance").strip()
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8455138511:AAE0-J6NdPag8U-va0OjE7F48-LFWYnDTok").strip()
+# If you want this agent to use its own local compute, set: PORT_AGENT_URL=local
+PORT_AGENT_URL = os.getenv("PORT_AGENT_URL", "local").strip()
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 
 CHECK_INTERVAL_SEC = int(os.getenv("CHECK_INTERVAL_SEC", "120"))
-SUMMARY_TICK_SEC = int(os.getenv("SUMMARY_TICK_SEC", "60"))
+SUMMARY_TICK_SEC  = int(os.getenv("SUMMARY_TICK_SEC", "60"))
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -66,15 +67,6 @@ def next_id(db: Dict[str, Any]) -> int:
     db["seq"] += 1
     return db["seq"]
 
-async def call_port_agent(payload: Dict[str, float]) -> Dict[str, Any]:
-    async with httpx.AsyncClient(timeout=30) as client:
-        r = await client.post(PORT_AGENT_URL, json=payload)
-        r.raise_for_status()
-        data = r.json()
-        if not data.get("ok"):
-            raise RuntimeError(f"port-agent not ok: {data}")
-        return data
-
 async def tg_send(chat_id: str | int, text: str):
     if not bot:
         raise RuntimeError("TELEGRAM_BOT_TOKEN not configured")
@@ -87,7 +79,7 @@ def to_alloc(bal: Dict[str, float]) -> Dict[str, float]:
 def fmt_rebalance_msg(plan: Dict[str, Any], rationale: Optional[str]) -> str:
     base = plan.get("base", "USDC")
     sells = plan.get("sells_to_base", []) or []
-    buys = plan.get("buys_from_base", []) or []
+    buys  = plan.get("buys_from_base", []) or []
     def legs(L): return "\n".join([f"• {x.get('src')} → {x.get('dst')}: {x.get('amount')}" for x in L]) or "• (none)"
     parts = [
         "🚨 <b>Rebalance Alert</b>",
@@ -114,6 +106,62 @@ def parse_regime(resp: Dict[str, Any]) -> str:
         if f"Regime={k}" in rat or f"regime={k}" in rat:
             return k
     return "UNKNOWN"
+
+# ───────────────────────────────────────────────────────────────
+# Local Port-Agent integration (swapPlanner)
+# ───────────────────────────────────────────────────────────────
+try:
+    # must be next to this file (backend/rebalance_api/swapPlanner.py)
+    from swapPlanner import build_swap_plan
+except Exception:
+    build_swap_plan = None  # guarded usage below
+
+_LAST_PREVIEW: Dict[str, Any] | None = None
+
+def compute_preview_from_balances(balances: Dict[str, float]) -> Dict[str, Any]:
+    """
+    Build a preview similar to your original port-agent:
+    return {"ok": True/False, "plan": {...}, "rationale": "...", "error": "...?"}
+    """
+    global _LAST_PREVIEW
+    try:
+        if build_swap_plan is None:
+            # Minimal fallback so the app still works without planner import
+            plan = {
+                "base": "USDC",
+                "sells_to_base": [],
+                "buys_from_base": [],
+                "base_pool_end": 0.0,
+                "shortfall": 0.0,
+                "target_weights": {},
+                "trade_deltas": {},
+            }
+            resp = {"ok": True, "plan": plan, "rationale": "Planner not available. Regime=GREEN"}
+        else:
+            plan = build_swap_plan(balances)  # expected to return your combined plan dict
+            rationale = plan.get("rationale") or "Reasoner: MeTTa policy. Regime=GREEN"
+            resp = {"ok": True, "plan": plan, "rationale": rationale}
+        _LAST_PREVIEW = resp
+        return resp
+    except Exception as e:
+        resp = {"ok": False, "error": f"planner error: {e}"}
+        _LAST_PREVIEW = resp
+        return resp
+
+async def call_port_agent(payload: Dict[str, float]) -> Dict[str, Any]:
+    """
+    If PORT_AGENT_URL=local (default here), compute locally.
+    Otherwise POST to PORT_AGENT_URL (remote service).
+    """
+    if PORT_AGENT_URL.lower() == "local":
+        return compute_preview_from_balances(payload)
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.post(PORT_AGENT_URL, json=payload)
+        r.raise_for_status()
+        data = r.json()
+        if not data.get("ok"):
+            raise RuntimeError(f"port-agent not ok: {data}")
+        return data
 
 # ───────────────────────────────────────────────────────────────
 # Request/Response Models (uAgents' pydantic Model)
@@ -148,10 +196,20 @@ class Balances(Model):
 class BalancesWithId(Balances):
     user_id: int
 
-class Prefs(Model):
+class PrefsBody(Model):
+    user_id: int
     active: Optional[bool] = None
     alert_threshold: Optional[str] = None  # RED|YELLOW|GREEN
     daily_summary_hour_utc: Optional[int] = None  # 0..23
+
+class StartStopBody(Model):
+    user_id: int
+
+class NotifyBody(Model):
+    user_id: int
+
+class StatusBody(Model):
+    user_id: int
 
 class StatusResp(Model):
     ok: bool
@@ -167,6 +225,12 @@ class HealthResp(Model):
     agent: str
     upstream: str
     telegram: bool
+
+class PreviewResp(Model):
+    ok: bool
+    plan: Optional[Dict[str, Any]] = None
+    rationale: Optional[str] = None
+    error: Optional[str] = None
 
 # ───────────────────────────────────────────────────────────────
 # Agent
@@ -189,10 +253,26 @@ async def on_start(ctx: Context):
     ctx.logger.info(f"[{AGENT_NAME}] Address: {agent.address}")
     ctx.logger.info(f"Mailbox Enabled: {bool(USE_MAILBOX)}")
     ctx.logger.info(f"DB: {DB_PATH}")
+    ctx.logger.info(f"Planner: {'local' if PORT_AGENT_URL.lower() == 'local' else PORT_AGENT_URL}")
     _ = load_db()
 
 # ───────────────────────────────────────────────────────────────
-# REST: onboarding & prefs
+# Unified Port-Agent routes (same service)
+# ───────────────────────────────────────────────────────────────
+@agent.on_rest_post("/rebalance/preview", Balances, PreviewResp)
+async def rebalance_preview(ctx: Context, body: Balances) -> PreviewResp:
+    resp = compute_preview_from_balances(body.dict())
+    return PreviewResp(**resp)
+
+@agent.on_rest_get("/rebalance/preview/cached", PreviewResp)
+async def rebalance_preview_cached(ctx: Context) -> PreviewResp:
+    global _LAST_PREVIEW
+    if _LAST_PREVIEW is None:
+        return PreviewResp(ok=False, error="no preview in cache yet")
+    return PreviewResp(**_LAST_PREVIEW)
+
+# ───────────────────────────────────────────────────────────────
+# REST: onboarding & balances (body-style + path-style kept)
 # ───────────────────────────────────────────────────────────────
 @agent.on_rest_post("/users/onboard", Onboard, OnboardResp)
 async def rest_onboard(ctx: Context, body: Onboard) -> OnboardResp:
@@ -224,18 +304,17 @@ async def rest_onboard(ctx: Context, body: Onboard) -> OnboardResp:
     return OnboardResp(ok=True, user_id=uid)
 
 @agent.on_rest_post("/users/{user_id}/balances", Balances, OkResp)
-async def rest_balances(ctx: Context, user_id: str, body: Balances) -> OkResp:
+async def rest_balances_path(ctx: Context, user_id: str, body: Balances) -> OkResp:
     db = load_db()
-    u = db["users"].get(str(body.user_id))
+    u = db["users"].get(user_id)  # use path param correctly
     if not u:
         return OkResp(ok=False, error="user not found")
     u["balances_json"] = body.dict()
     save_db(db)
     return OkResp(ok=True)
 
-# convenience endpoint: user_id in the JSON body
 @agent.on_rest_post("/users/balances", BalancesWithId, OkResp)
-async def rest_balances_flat(ctx: Context, body: BalancesWithId) -> OkResp:
+async def rest_balances_body(ctx: Context, body: BalancesWithId) -> OkResp:
     db = load_db()
     u = db["users"].get(str(body.user_id))
     if not u:
@@ -247,25 +326,7 @@ async def rest_balances_flat(ctx: Context, body: BalancesWithId) -> OkResp:
     return OkResp(ok=True)
 
 # ───────────────────────────────────────────────────────────────
-# Body-style request models (include user_id in body)
-# ───────────────────────────────────────────────────────────────
-class PrefsBody(Model):
-    user_id: int
-    active: Optional[bool] = None
-    alert_threshold: Optional[str] = None  # RED|YELLOW|GREEN
-    daily_summary_hour_utc: Optional[int] = None  # 0..23
-
-class StartStopBody(Model):
-    user_id: int
-
-class NotifyBody(Model):
-    user_id: int
-
-class StatusBody(Model):
-    user_id: int
-
-# ───────────────────────────────────────────────────────────────
-# Body-style REST endpoints (no path params)
+# Body-style control (prefs/start/stop/notify/status)
 # ───────────────────────────────────────────────────────────────
 @agent.on_rest_post("/users/prefs", PrefsBody, OkResp)
 async def prefs_body(ctx: Context, body: PrefsBody) -> OkResp:
@@ -456,7 +517,12 @@ async def periodic_summary_check(ctx: Context):
 # ───────────────────────────────────────────────────────────────
 @agent.on_rest_get("/health", HealthResp)
 async def rest_health(ctx: Context) -> HealthResp:
-    return HealthResp(ok=True, agent=AGENT_NAME, upstream=PORT_AGENT_URL, telegram=bool(bot))
+    return HealthResp(
+        ok=True,
+        agent=AGENT_NAME,
+        upstream=("local" if PORT_AGENT_URL.lower() == "local" else PORT_AGENT_URL),
+        telegram=bool(bot)
+    )
 
 # ───────────────────────────────────────────────────────────────
 # Run

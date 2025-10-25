@@ -10,7 +10,7 @@ import json
 import requests
 from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
-from swapPlanner import build_swap_plan
+from ethOnline2025.backend.rebalance_api.app.swapPlanner import build_swap_plan
 
 PORT_AGENT_URL = "http://127.0.0.1:8011/rebalance"
 

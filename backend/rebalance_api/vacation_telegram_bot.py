@@ -152,7 +152,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from telegram import Bot
-from swapPlanner import build_swap_plan  # in same directory
+from ethOnline2025.backend.rebalance_api.app.swapPlanner import build_swap_plan  # in same directory
 
 # ───────────────────────────────────────────────────────────────
 # Config

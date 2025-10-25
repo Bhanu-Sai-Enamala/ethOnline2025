@@ -88,3 +88,5 @@ hyperon_cache/
 # ────────────────────────────────
 backend/rebalance_api/app/data/rebalance_latest.json
 *.sqlite3
+
+/Users/bhanusaienamala/Desktop/ethtest/ethOnline2025/backend/rebalance_api/.env

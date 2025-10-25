@@ -1,0 +1,157 @@
+to start app
+
+./run.sh
+
+to start api service for allocations page
+
+inside backend/rebalance_api run the command below
+
+uvicorn ui_service:app --host 127.0.0.1 --port 8088 --reload
+
+How to use above api to get rebalance suggestion
+
+curl -s -X POST http://127.0.0.1:8088/ui/preview \
+  -H "Content-Type: application/json" \
+  -d '{
+    "usdc_balance": 1200.0,
+    "usdt_balance": 800.0,
+    "dai_balance": 500.0,
+    "fdusd_balance": 300.0,
+    "busd_balance": 250.0,
+    "tusd_balance": 150.0,
+    "usdp_balance": 200.0,
+    "pyusd_balance": 100.0,
+    "usdd_balance": 400.0,
+    "gusd_balance": 100.0,
+    "quote_amount": 1000.0
+  }' | jq .
+
+{
+  "current_allocation": {
+    "BUSD": 0.0625,
+    "DAI": 0.125,
+    "FDUSD": 0.075,
+    "GUSD": 0.025,
+    "PYUSD": 0.025,
+    "TUSD": 0.0375,
+    "USDC": 0.3,
+    "USDD": 0.1,
+    "USDP": 0.05,
+    "USDT": 0.2
+  },
+  "suggested_allocation": {
+    "BUSD": 0.0851,
+    "DAI": 0.0851,
+    "FDUSD": 0.0851,
+    "GUSD": 0.0851,
+    "PYUSD": 0.0851,
+    "TUSD": 0.0851,
+    "USDC": 0.0851,
+    "USDD": 0.0851,
+    "USDP": 0.0851,
+    "USDT": 0.234
+  },
+  "trade_deltas": {
+    "BUSD": 90.4,
+    "DAI": -159.6,
+    "FDUSD": 40.4,
+    "GUSD": 240.4,
+    "PYUSD": 240.4,
+    "TUSD": 190.4,
+    "USDC": -859.6,
+    "USDD": -59.6,
+    "USDP": 140.4,
+    "USDT": 136.0
+  },
+  "swap_plan": {
+    "base": "USDC",
+    "sells_to_base": [
+      {
+        "src": "DAI",
+        "dst": "USDC",
+        "amount": 159.6,
+        "intent": "SELL",
+        "min_receive": null,
+        "note": "fund base"
+      },
+      {
+        "src": "USDD",
+        "dst": "USDC",
+        "amount": 59.6,
+        "intent": "SELL",
+        "min_receive": null,
+        "note": "fund base"
+      }
+    ],
+    "buys_from_base": [
+      {
+        "src": "USDC",
+        "dst": "BUSD",
+        "amount": 118.97,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      },
+      {
+        "src": "USDC",
+        "dst": "FDUSD",
+        "amount": 53.17,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      },
+      {
+        "src": "USDC",
+        "dst": "GUSD",
+        "amount": 316.37,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      },
+      {
+        "src": "USDC",
+        "dst": "PYUSD",
+        "amount": 316.37,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      },
+      {
+        "src": "USDC",
+        "dst": "TUSD",
+        "amount": 250.57,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      },
+      {
+        "src": "USDC",
+        "dst": "USDP",
+        "amount": 184.77,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      },
+      {
+        "src": "USDC",
+        "dst": "USDT",
+        "amount": 178.98,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      }
+    ],
+    "base_funding": {
+      "base_balance_start": 1200.0,
+      "wallet_base_available": 0.0,
+      "from_sells": 219.2
+    },
+    "base_pool_start": 1419.2,
+    "base_needed_for_buys": 1078.4,
+    "base_delta_target": -859.6,
+    "base_pool_end": -0.0,
+    "shortfall": 0.0,
+    "warnings": []
+  },
+  "rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Combined risks derived from peg⊕sentiment. Regime=GREEN, liquidity gate applied if deviation>0.30%."
+}

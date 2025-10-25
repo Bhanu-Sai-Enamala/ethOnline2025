@@ -1,0 +1,17 @@
+{
+  "trade_deltas": {
+    "USDC": -836.4,
+    "USDT": -254.8,
+    "DAI": -136.4,
+    "FDUSD": 63.6,
+    "BUSD": 113.6,
+    "TUSD": 213.6,
+    "USDP": 163.6,
+    "PYUSD": 263.6,
+    "USDD": 145.2,
+    "GUSD": 263.6
+  },
+  "base": "USDC",
+  "slippage_bps": 30,
+  "wallet_base_available": 5000.0
+}

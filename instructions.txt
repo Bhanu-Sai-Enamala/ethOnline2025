@@ -1,67 +1,47 @@
-to start app
-
-./run.sh
-
-to start api service for allocations page
-
-inside backend/rebalance_api run the command below
-
-uvicorn ui_service:app --host 127.0.0.1 --port 8088 --reload
-
-How to use above api to get rebalance suggestion
-
-curl -s -X POST http://127.0.0.1:8088/ui/preview \
+bhanusaienamala@Bhanus-MacBook-Pro ~ % curl -s -X POST https://ethonline2025.onrender.com/rebalance/preview \
   -H "Content-Type: application/json" \
   -d '{
-    "usdc_balance": 1200.0,
-    "usdt_balance": 800.0,
-    "dai_balance": 500.0,
-    "fdusd_balance": 300.0,
-    "busd_balance": 250.0,
-    "tusd_balance": 150.0,
-    "usdp_balance": 200.0,
-    "pyusd_balance": 100.0,
-    "usdd_balance": 400.0,
-    "gusd_balance": 100.0,
-    "quote_amount": 1000.0
+    "usdc_balance":1200,"usdt_balance":800,"dai_balance":500,"fdusd_balance":300,
+    "busd_balance":250,"tusd_balance":150,"usdp_balance":200,"pyusd_balance":100,
+    "usdd_balance":400,"gusd_balance":100,"quote_amount":1000
   }' | jq .
-
 {
+  "ok": true,
   "current_allocation": {
-    "BUSD": 0.0625,
+    "USDC": 0.3,
+    "USDT": 0.2,
     "DAI": 0.125,
     "FDUSD": 0.075,
-    "GUSD": 0.025,
-    "PYUSD": 0.025,
+    "BUSD": 0.0625,
     "TUSD": 0.0375,
-    "USDC": 0.3,
-    "USDD": 0.1,
     "USDP": 0.05,
-    "USDT": 0.2
+    "PYUSD": 0.025,
+    "USDD": 0.1,
+    "GUSD": 0.025
   },
   "suggested_allocation": {
-    "BUSD": 0.0851,
-    "DAI": 0.0851,
-    "FDUSD": 0.0851,
-    "GUSD": 0.0851,
-    "PYUSD": 0.0851,
-    "TUSD": 0.0851,
-    "USDC": 0.0851,
-    "USDD": 0.0851,
-    "USDP": 0.0851,
-    "USDT": 0.234
+    "BUSD": 0.0909,
+    "DAI": 0.0909,
+    "FDUSD": 0.0909,
+    "GUSD": 0.0909,
+    "PYUSD": 0.0909,
+    "TUSD": 0.0909,
+    "USDC": 0.0909,
+    "USDD": 0.1363,
+    "USDP": 0.0909,
+    "USDT": 0.1363
   },
   "trade_deltas": {
-    "BUSD": 90.4,
-    "DAI": -159.6,
-    "FDUSD": 40.4,
-    "GUSD": 240.4,
-    "PYUSD": 240.4,
-    "TUSD": 190.4,
-    "USDC": -859.6,
-    "USDD": -59.6,
-    "USDP": 140.4,
-    "USDT": 136.0
+    "BUSD": 113.6,
+    "DAI": -136.4,
+    "FDUSD": 63.6,
+    "GUSD": 263.6,
+    "PYUSD": 263.6,
+    "TUSD": 213.6,
+    "USDC": -836.4,
+    "USDD": 145.2,
+    "USDP": 163.6,
+    "USDT": -254.8
   },
   "swap_plan": {
     "base": "USDC",
@@ -69,15 +49,15 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
       {
         "src": "DAI",
         "dst": "USDC",
-        "amount": 159.6,
+        "amount": 136.4,
         "intent": "SELL",
         "min_receive": null,
         "note": "fund base"
       },
       {
-        "src": "USDD",
+        "src": "USDT",
         "dst": "USDC",
-        "amount": 59.6,
+        "amount": 254.8,
         "intent": "SELL",
         "min_receive": null,
         "note": "fund base"
@@ -87,7 +67,7 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
       {
         "src": "USDC",
         "dst": "BUSD",
-        "amount": 118.97,
+        "amount": 147.34,
         "intent": "BUY",
         "min_receive": null,
         "note": null
@@ -95,7 +75,7 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
       {
         "src": "USDC",
         "dst": "FDUSD",
-        "amount": 53.17,
+        "amount": 82.49,
         "intent": "BUY",
         "min_receive": null,
         "note": null
@@ -103,7 +83,7 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
       {
         "src": "USDC",
         "dst": "GUSD",
-        "amount": 316.37,
+        "amount": 341.9,
         "intent": "BUY",
         "min_receive": null,
         "note": null
@@ -111,7 +91,7 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
       {
         "src": "USDC",
         "dst": "PYUSD",
-        "amount": 316.37,
+        "amount": 341.9,
         "intent": "BUY",
         "min_receive": null,
         "note": null
@@ -119,7 +99,15 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
       {
         "src": "USDC",
         "dst": "TUSD",
-        "amount": 250.57,
+        "amount": 277.05,
+        "intent": "BUY",
+        "min_receive": null,
+        "note": null
+      },
+      {
+        "src": "USDC",
+        "dst": "USDD",
+        "amount": 188.33,
         "intent": "BUY",
         "min_receive": null,
         "note": null
@@ -127,15 +115,7 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
       {
         "src": "USDC",
         "dst": "USDP",
-        "amount": 184.77,
-        "intent": "BUY",
-        "min_receive": null,
-        "note": null
-      },
-      {
-        "src": "USDC",
-        "dst": "USDT",
-        "amount": 178.98,
+        "amount": 212.19,
         "intent": "BUY",
         "min_receive": null,
         "note": null
@@ -144,14 +124,15 @@ curl -s -X POST http://127.0.0.1:8088/ui/preview \
     "base_funding": {
       "base_balance_start": 1200.0,
       "wallet_base_available": 0.0,
-      "from_sells": 219.2
+      "from_sells": 391.2
     },
-    "base_pool_start": 1419.2,
-    "base_needed_for_buys": 1078.4,
-    "base_delta_target": -859.6,
-    "base_pool_end": -0.0,
+    "base_pool_start": 1591.2,
+    "base_needed_for_buys": 1226.8,
+    "base_delta_target": -836.4,
+    "base_pool_end": 0.0,
     "shortfall": 0.0,
     "warnings": []
   },
-  "rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Combined risks derived from peg⊕sentiment. Regime=GREEN, liquidity gate applied if deviation>0.30%."
+  "rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Combined risks derived from peg⊕sentiment. Regime=GREEN, liquidity gate applied if deviation>0.30%.",
+  "error": null
 }

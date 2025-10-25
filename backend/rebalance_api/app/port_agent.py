@@ -495,7 +495,7 @@ DEFAULT_TIMEOUT_SEC = float(os.getenv("DEFAULT_TIMEOUT_SEC", "60"))
 AGENT_NAME = "rebalance-rest-port"
 
 # Vacation settings
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8455138511:AAE0-J6NdPag8U-va0OjE7F48-LFWYnDTok").strip()
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 CHECK_INTERVAL_SEC = int(os.getenv("CHECK_INTERVAL_SEC", "120"))        # alert checks
 SUMMARY_TICK_SEC   = int(os.getenv("SUMMARY_TICK_SEC", "60"))           # summary clock tick
 DEFAULT_ALERT_THRESHOLD = os.getenv("DEFAULT_ALERT_THRESHOLD", "RED")   # per-user can override

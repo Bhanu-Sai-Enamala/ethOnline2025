@@ -10,7 +10,7 @@ set -a
 set +a
 
 HOST="${API_HOST:-127.0.0.1}"
-PORT="${API_PORT:-8011}"
+PORT="${API_PORT:-8000}"
 
 echo "[test] POST http://${HOST}:${PORT}/rebalance"
 curl -s -X POST "http://${HOST}:${PORT}/rebalance" \

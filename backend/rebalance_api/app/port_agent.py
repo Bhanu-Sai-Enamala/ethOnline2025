@@ -487,7 +487,7 @@ from telegram import Bot
 # --- Load environment ---
 load_dotenv()
 
-PORT = int(os.getenv("PORT", "8011"))
+PORT = int(os.getenv("PORT", "8000"))
 CLIENT_SEED = os.getenv("CLIENT_SEED", "ethOnlineseed")
 BALANCER_AGENT_ADDRESS = os.getenv("BALANCER_AGENT_ADDRESS", "").strip()
 USE_MAILBOX = str(os.getenv("MAILBOX_ENABLED", os.getenv("USE_MAILBOX", "true"))).lower() in ("1", "true", "yes", "y")

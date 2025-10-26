@@ -319,9 +319,9 @@ start_backend
 ### ─────────────────────────────────────────────────────────────────────────────
 echo
 log "Services are starting. Typical endpoints:"
-log "  Rebalance API:   http://127.0.0.1:${API_PORT:-8011}/health"
+log "  Rebalance API:   http://127.0.0.1:${API_PORT:8000}/health"
 log "  Quick test:"
-echo "    curl -s -X POST http://127.0.0.1:${API_PORT:-8011}/rebalance \\"
+echo "    curl -s -X POST http://127.0.0.1:${API_PORT:-8000}/rebalance \\"
 echo '      -H "Content-Type: application/json" \\'
 echo '      -d "{\"usdc_balance\":450,\"usdt_balance\":350,\"quote_amount\":1.0,\"timeout_sec\":12}" | jq .'
 echo

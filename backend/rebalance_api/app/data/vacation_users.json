@@ -25,32 +25,32 @@
       },
       "last_plan_json": {
         "target_weights": {
-          "BUSD": 0.0851,
-          "DAI": 0.0851,
-          "FDUSD": 0.0851,
-          "GUSD": 0.0851,
-          "PYUSD": 0.0851,
-          "TUSD": 0.0851,
-          "USDC": 0.0851,
-          "USDD": 0.0851,
-          "USDP": 0.0851,
-          "USDT": 0.2339
+          "BUSD": 0.0976,
+          "DAI": 0.0976,
+          "FDUSD": 0.0976,
+          "GUSD": 0.0976,
+          "PYUSD": 0.1057,
+          "TUSD": 0.0976,
+          "USDC": 0.0976,
+          "USDD": 0.1057,
+          "USDP": 0.0976,
+          "USDT": 0.1057
         },
         "trade_deltas": {
-          "BUSD": 0.09,
-          "DAI": 0.09,
-          "FDUSD": 0.09,
-          "GUSD": 0.09,
-          "PYUSD": 0.09,
-          "TUSD": 0.09,
-          "USDC": 0.09,
-          "USDD": 0.09,
-          "USDP": 0.09,
-          "USDT": 0.23
+          "BUSD": 0.1,
+          "DAI": 0.1,
+          "FDUSD": 0.1,
+          "GUSD": 0.1,
+          "PYUSD": 0.11,
+          "TUSD": 0.1,
+          "USDC": 0.1,
+          "USDD": 0.11,
+          "USDP": 0.1,
+          "USDT": 0.11
         },
         "base": "USDC"
       },
-      "last_rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Past-event penalties applied where present. Combined risks from peg\u2295sentiment; liquidity gate=0.0030. Regime=GREEN. HealthScore(before)=0.000, after=0.113.",
+      "last_rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Past-event penalties applied where present. Combined risks from peg\u2295sentiment; liquidity gate=0.0030. Regime=GREEN. HealthScore(before)=0.000, after=0.104.",
       "last_regime": "GREEN"
     }
   }

@@ -472,6 +472,7 @@ import hashlib
 from dotenv import load_dotenv
 from uagents import Agent, Context, Model
 from uagents.setup import fund_agent_if_low
+from typing import Union
 
 # Balancer models
 from app.rebalance_models import RebalanceCheckRequest, RebalanceCheckResponse
@@ -875,7 +876,7 @@ async def _send_summary_now(ctx: Context, uid: int, u: Dict[str, Any]) -> None:
     except Exception as e:
         ctx.logger.warning(f"[summary-now] telegram send failed for user {uid}: {e}")
 
-def fmt_rebalance_msg(plan: Dict[str, Any] | None, rationale: Optional[str]) -> str:
+def fmt_rebalance_msg(plan: Optional[Dict[str, Any]], rationale: Optional[str]) -> str:
     plan = plan or {}
     base = plan.get("base", "USDC")
 

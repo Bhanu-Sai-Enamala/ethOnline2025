@@ -493,7 +493,7 @@ def getenv(name, *fallbacks, default=None):
             return v
     return default
 # Core
-PORT = int(getenv("APP_PORT", "PORT", default="8011"))
+PORT = 8011
 CLIENT_SEED = getenv("APP_SEED", "CLIENT_SEED", default="ethOnlineseed")
 USE_MAILBOX = str(getenv("APP_MAILBOX_ENABLED", "MAILBOX_ENABLED", "USE_MAILBOX", default="true")).lower() in ("1","true","yes","y")
 DEFAULT_TIMEOUT_SEC = float(getenv("APP_TIMEOUT_SEC", "DEFAULT_TIMEOUT_SEC", default="60"))

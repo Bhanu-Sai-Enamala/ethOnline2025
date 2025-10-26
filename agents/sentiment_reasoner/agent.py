@@ -1019,6 +1019,7 @@ agent = Agent(
     seed=REASONER_SEED,
     mailbox=USE_MAILBOX,
     publish_agent_details=True,
+    port=None
 )
 
 # -----------------------------------------------------------------------------

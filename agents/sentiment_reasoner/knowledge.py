@@ -132,6 +132,12 @@ def initialize_knowledge_graph(m: MeTTa) -> None:
     sp.add_atom(E(S("event-note"),
                   S("USDC_2023_03_SVB"),
                   ValueAtom("SVB exposure scare; rapid depeg/repeg over weekend")))
+    # PATCH A — add explicit links & severities (paste under existing event atoms)
+    sp.add_atom(E(S("event-on"), S("DAI_2020_03_12"), S("DAI")))
+    sp.add_atom(E(S("event-severity"), S("DAI_2020_03_12"), ValueAtom(0.25)))
+
+    sp.add_atom(E(S("event-on"), S("USDC_2023_03_SVB"), S("USDC")))
+    sp.add_atom(E(S("event-severity"), S("USDC_2023_03_SVB"), ValueAtom(0.20)))
 
 
 # ------------------------------
@@ -248,3 +254,47 @@ def read_regime(m: MeTTa) -> str:
         return parts[-1] if parts else "UNKNOWN"
     except Exception:
         return "UNKNOWN"
+    
+# PATCH B — helper to read per-coin event penalties (put near other readers)
+def read_event_penalties(m: MeTTa) -> Dict[str, float]:
+    """
+    Sum per-coin penalties from historical events.
+    Uses atoms: (event-on <EVENT> <COIN>) and (event-severity <EVENT> <float>)
+    Returns coin -> [0..1] penalty. If no events, 0.0.
+    """
+    penalties: Dict[str, float] = {c: 0.0 for c in COINS}
+    try:
+        # Get all (event-on ?e ?c)
+        on_pairs = m.run("(event-on ?e ?c)") or []
+        # Normalize results to tuples of (event, coin)
+        pairs: List[Tuple[str, str]] = []
+        for r in on_pairs:
+            txt = str(r).replace("(", " ").replace(")", " ").split()
+            # expected: ["event-on", "<EVENT>", "<COIN>"]
+            if len(txt) >= 3:
+                pairs.append((txt[-2], txt[-1]))
+
+        # Map severities for events
+        sev_map: Dict[str, float] = {}
+        for ev, _coin in pairs:
+            res = m.run(f"(event-severity {ev} ?x)") or []
+            if res:
+                stxt = str(res[0]).replace(")", " ").split()
+                try:
+                    sev_map[ev] = float(stxt[-1])
+                except Exception:
+                    sev_map[ev] = 0.1  # safe default
+            else:
+                sev_map[ev] = 0.1
+
+        # Accumulate per coin
+        for ev, coin in pairs:
+            if coin in penalties:
+                penalties[coin] += sev_map.get(ev, 0.1)
+
+        # Clamp 0..1
+        for c in penalties:
+            penalties[c] = max(0.0, min(1.0, penalties[c]))
+    except Exception:
+        pass
+    return penalties

@@ -486,19 +486,27 @@ from telegram import Bot
 
 # --- Load environment ---
 load_dotenv()
-
-PORT = int(os.getenv("PORT", "8011"))
-CLIENT_SEED = os.getenv("CLIENT_SEED", "ethOnlineseed")
-BALANCER_AGENT_ADDRESS = os.getenv("BALANCER_AGENT_ADDRESS", "").strip()
-USE_MAILBOX = str(os.getenv("MAILBOX_ENABLED", os.getenv("USE_MAILBOX", "true"))).lower() in ("1", "true", "yes", "y")
-DEFAULT_TIMEOUT_SEC = float(os.getenv("DEFAULT_TIMEOUT_SEC", "60"))
+def getenv(name, *fallbacks, default=None):
+    for k in (name, *fallbacks):
+        v = os.getenv(k)
+        if v is not None:
+            return v
+    return default
+# Core
+PORT = int(getenv("APP_PORT", "PORT", default="8011"))
+CLIENT_SEED = getenv("APP_SEED", "CLIENT_SEED", default="ethOnlineseed")
+USE_MAILBOX = str(getenv("APP_MAILBOX_ENABLED", "MAILBOX_ENABLED", "USE_MAILBOX", default="true")).lower() in ("1","true","yes","y")
+DEFAULT_TIMEOUT_SEC = float(getenv("APP_TIMEOUT_SEC", "DEFAULT_TIMEOUT_SEC", default="60"))
 AGENT_NAME = "rebalance-rest-port"
 
-# Vacation settings
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-CHECK_INTERVAL_SEC = int(os.getenv("CHECK_INTERVAL_SEC", "120"))        # alert checks
-SUMMARY_TICK_SEC   = int(os.getenv("SUMMARY_TICK_SEC", "60"))           # summary clock tick
-DEFAULT_ALERT_THRESHOLD = os.getenv("DEFAULT_ALERT_THRESHOLD", "RED")   # per-user can override
+# Upstream
+BALANCER_AGENT_ADDRESS = getenv("BALANCER_AGENT_ADDRESS", default="").strip()
+
+# Telegram / alerts
+TELEGRAM_BOT_TOKEN = getenv("TG_BOT_TOKEN", "TELEGRAM_BOT_TOKEN", default="").strip()
+CHECK_INTERVAL_SEC = int(getenv("ALERT_CHECK_SEC", "CHECK_INTERVAL_SEC", default="120"))
+SUMMARY_TICK_SEC   = int(getenv("SUMMARY_TICK_SEC", default="60"))
+DEFAULT_ALERT_THRESHOLD = getenv("ALERT_THRESHOLD_DEFAULT", "DEFAULT_ALERT_THRESHOLD", default="RED")  # per-user can override
 
 bot = Bot(TELEGRAM_BOT_TOKEN) if TELEGRAM_BOT_TOKEN else None
 
@@ -582,6 +590,55 @@ class HealthResp(Model):
     agent: str
     upstream: str
     telegram: bool
+
+class LinkBody(Model):
+    wallet_address: str
+    nickname: Optional[str] = ""
+
+class LinkResp(Model):
+    ok: bool
+    url: Optional[str] = None
+    token: Optional[str] = None
+    error: Optional[str] = None
+
+
+# --- Telegram linking (deep-link tokens) ---
+import secrets
+from urllib.parse import quote_plus
+
+BOT_USERNAME = getenv("TG_BOT_USERNAME", "TELEGRAM_BOT_USERNAME", default="")  # e.g., 'MyPegBot'
+WEBHOOK_SECRET = getenv("TG_WEBHOOK_SECRET", "TELEGRAM_WEBHOOK_SECRET", default="")  # optional
+
+LINK_DB_PATH = DATA_DIR / "telegram_link_tokens.json"
+
+def _load_link_db() -> Dict[str, Any]:
+    if LINK_DB_PATH.exists():
+        try:
+            return json.loads(LINK_DB_PATH.read_text())
+        except Exception:
+            pass
+    return {"tokens": {}}  # token -> {"wallet": "...", "nickname": "", "exp": <unix_ts>}
+
+def _save_link_db(db: Dict[str, Any]):
+    tmp = LINK_DB_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps(db, indent=2))
+    tmp.replace(LINK_DB_PATH)
+
+def _mint_link_token(wallet_address: str, nickname: str = "", ttl_sec: int = 900) -> str:
+    db = _load_link_db()
+    tok = secrets.token_urlsafe(24)
+    db["tokens"][tok] = {"wallet": wallet_address, "nickname": nickname or "", "exp": int(_now()) + int(ttl_sec)}
+    _save_link_db(db)
+    return tok
+
+def _consume_link_token(tok: str) -> tuple[bool, Optional[str], str]:
+    # returns (ok, wallet, nickname_or_empty)
+    db = _load_link_db()
+    rec = db["tokens"].pop(tok, None)
+    _save_link_db(db)
+    if not rec: return (False, None, "")
+    if int(_now()) > int(rec.get("exp", 0)): return (False, None, "")
+    return (True, rec.get("wallet"), rec.get("nickname", ""))
 
 # ─────────────────────────────────────────────────────────────
 # Helpers (time, cache, users DB)
@@ -677,25 +734,25 @@ def next_user_id(db: Dict[str, Any]) -> int:
     db["seq"] += 1
     return db["seq"]
 
-def fmt_rebalance_msg(plan_like: Dict[str, Any], rationale: Optional[str]) -> str:
-    base = plan_like.get("base", "USDC")
-    sells = plan_like.get("sells_to_base", []) or []
-    buys  = plan_like.get("buys_from_base", []) or []
+# def fmt_rebalance_msg(plan_like: Dict[str, Any], rationale: Optional[str]) -> str:
+#     base = plan_like.get("base", "USDC")
+#     sells = plan_like.get("sells_to_base", []) or []
+#     buys  = plan_like.get("buys_from_base", []) or []
 
-    def legs(L):
-        return "\n".join([f"• {x.get('src')} → {x.get('dst')}: {x.get('amount')}" for x in L]) or "• (none)"
+#     def legs(L):
+#         return "\n".join([f"• {x.get('src')} → {x.get('dst')}: {x.get('amount')}" for x in L]) or "• (none)"
 
-    parts = [
-        "🚨 <b>Rebalance Alert</b>",
-        f"<b>Routing base:</b> {base}",
-        "", "<b>Sells (to base):</b>", legs(sells),
-        "", "<b>Buys (from base):</b>",  legs(buys),
-        "", f"<b>Base pool end:</b> {plan_like.get('base_pool_end', 0)}",
-        f"<b>Shortfall:</b> {plan_like.get('shortfall', 0)}",
-    ]
-    if rationale:
-        parts += ["", f"<b>Rationale:</b> {rationale}"]
-    return "\n".join(parts)
+#     parts = [
+#         "🚨 <b>Rebalance Alert</b>",
+#         f"<b>Routing base:</b> {base}",
+#         "", "<b>Sells (to base):</b>", legs(sells),
+#         "", "<b>Buys (from base):</b>",  legs(buys),
+#         "", f"<b>Base pool end:</b> {plan_like.get('base_pool_end', 0)}",
+#         f"<b>Shortfall:</b> {plan_like.get('shortfall', 0)}",
+#     ]
+#     if rationale:
+#         parts += ["", f"<b>Rationale:</b> {rationale}"]
+#     return "\n".join(parts)
 
 def fmt_summary_msg(current: Dict[str, float], suggested: Dict[str, float]) -> str:
     lines = ["📊 <b>Daily Summary</b>", "", "<b>Current Allocation</b>"]
@@ -704,17 +761,175 @@ def fmt_summary_msg(current: Dict[str, float], suggested: Dict[str, float]) -> s
     lines += [f"• {k}: {v:.2%}" for k, v in suggested.items()]
     return "\n".join(lines)
 
-def parse_regime(resp_like: Dict[str, Any]) -> str:
-    rat = (
-        resp_like.get("error")
-        or resp_like.get("rationale")
-        or resp_like.get("diagnostics_json")
-        or ""
-    )
+# def parse_regime(resp_like: Dict[str, Any]) -> str:
+#     rat = (
+#         resp_like.get("error")
+#         or resp_like.get("rationale")
+#         or resp_like.get("diagnostics_json")
+#         or ""
+#     )
+#     for k in ("RED", "YELLOW", "GREEN"):
+#         if f"Regime={k}" in rat or f"regime={k}" in rat:
+#             return k
+#     return "UNKNOWN"
+
+# --- replace/extend these helper functions ---
+
+def parse_regime(resp_like) -> str:
+    """Accepts a dict OR a plain string."""
+    if isinstance(resp_like, str):
+        rat = resp_like
+    else:
+        rat = (
+            (resp_like or {}).get("error")
+            or (resp_like or {}).get("rationale")
+            or (resp_like or {}).get("diagnostics_json")
+            or ""
+        )
     for k in ("RED", "YELLOW", "GREEN"):
         if f"Regime={k}" in rat or f"regime={k}" in rat:
             return k
     return "UNKNOWN"
+
+def _fmt_num(x: float, eps: float = 0.01) -> str:
+    """Pretty number: clamp tiny noise to 0 and show 2dp."""
+    try:
+        v = float(x)
+    except Exception:
+        return str(x)
+    if abs(v) < eps:
+        v = 0.0
+    return f"{v:.2f}"
+
+async def _send_summary_now(ctx: Context, uid: int, u: Dict[str, Any]) -> None:
+    """
+    Immediately send a summary to this user.
+    If there's no cached plan yet, we request one and compute a preview first.
+    """
+    if not bot:
+        ctx.logger.info(f"[summary-now] Telegram bot not configured, skipping send for user {uid}")
+        return
+
+    # Ensure balances exist
+    bal = u.get("balances_json")
+    if not bal:
+        ctx.logger.info(f"[summary-now] No balances for user {uid}, skipping")
+        return
+
+    # Current alloc from balances
+    current = _to_current_alloc({
+        "USDC": bal.get("usdc_balance", 0.0), "USDT": bal.get("usdt_balance", 0.0),
+        "DAI": bal.get("dai_balance", 0.0), "FDUSD": bal.get("fdusd_balance", 0.0),
+        "BUSD": bal.get("busd_balance", 0.0), "TUSD": bal.get("tusd_balance", 0.0),
+        "USDP": bal.get("usdp_balance", 0.0), "PYUSD": bal.get("pyusd_balance", 0.0),
+        "USDD": bal.get("usdd_balance", 0.0), "GUSD": bal.get("gusd_balance", 0.0),
+    })
+
+    # If we don't have a last plan yet, fetch one quickly
+    suggested = {}
+    if not (u.get("last_plan_json") and isinstance(u["last_plan_json"], dict)):
+        # Build request and compute preview
+        req = RebalanceCheckRequest(
+            usdc_balance=float(bal.get("usdc_balance", 0.0)),
+            usdt_balance=float(bal.get("usdt_balance", 0.0)),
+            dai_balance=float(bal.get("dai_balance", 0.0)),
+            fdusd_balance=float(bal.get("fdusd_balance", 0.0)),
+            busd_balance=float(bal.get("busd_balance", 0.0)),
+            tusd_balance=float(bal.get("tusd_balance", 0.0)),
+            usdp_balance=float(bal.get("usdp_balance", 0.0)),
+            pyusd_balance=float(bal.get("pyusd_balance", 0.0)),
+            usdd_balance=float(bal.get("usdd_balance", 0.0)),
+            gusd_balance=float(bal.get("gusd_balance", 0.0)),
+            quote_amount=float(bal.get("quote_amount", 1000.0)),
+        )
+        if BALANCER_AGENT_ADDRESS.startswith("agent1q"):
+            await ctx.send(BALANCER_AGENT_ADDRESS, req)
+            preview = await _compute_preview_after_reply(ctx, req)
+            if preview.ok:
+                suggested = preview.suggested_allocation or {}
+                # also store as last_plan for user
+                u["last_plan_json"] = {
+                    "target_weights": suggested,
+                    "trade_deltas": preview.trade_deltas or {},
+                    "base": (preview.swap_plan or {}).get("base", "USDC"),
+                }
+                u["last_rationale"] = preview.rationale or ""
+                u["last_regime"] = parse_regime(preview.rationale or "")
+            else:
+                suggested = {}
+        else:
+            suggested = {}
+    else:
+        suggested = u["last_plan_json"].get("target_weights", {}) or {}
+
+    # Send the summary
+    try:
+        await bot.send_message(
+            chat_id=u["telegram_chat_id"],
+            text=fmt_summary_msg(current, suggested),
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+        )
+        u["last_alert_at"] = iso(now_utc_dt())  # reuse field to track last send time
+        ctx.logger.info(f"[summary-now] Sent immediate summary to user {uid}")
+    except Exception as e:
+        ctx.logger.warning(f"[summary-now] telegram send failed for user {uid}: {e}")
+
+def fmt_rebalance_msg(plan: Dict[str, Any] | None, rationale: Optional[str]) -> str:
+    plan = plan or {}
+    base = plan.get("base", "USDC")
+
+    sells = plan.get("sells_to_base") or []
+    buys  = plan.get("buys_from_base") or []
+
+    regime = parse_regime(rationale or "")
+    regime_badge = {
+        "GREEN": "🟢 GREEN",
+        "YELLOW": "🟡 YELLOW",
+        "RED": "🔴 RED",
+        "UNKNOWN": "⚪ UNKNOWN",
+    }.get(regime, "⚪ UNKNOWN")
+
+    # sections
+    def legs(title: str, L: list[dict]) -> str:
+        if not L:
+            return ""
+        lines = [f"<b>{title}</b>"]
+        for x in L:
+            src = x.get("src"); dst = x.get("dst"); amt = _fmt_num(x.get("amount", 0))
+            lines.append(f"• {src} → {dst}: {amt}")
+        return "\n".join(lines)
+
+    sells_block = legs("Sells (to base)", sells)
+    buys_block  = legs("Buys (from base)", buys)
+
+    # footer numbers (only if meaningful)
+    base_end = plan.get("base_pool_end", 0)
+    shortfall = plan.get("shortfall", 0)
+    footer = []
+    if abs(float(base_end or 0)) >= 0.01:
+        footer.append(f"<b>Base pool end:</b> {_fmt_num(base_end)}")
+    if abs(float(shortfall or 0)) >= 0.01:
+        footer.append(f"<b>Shortfall:</b> {_fmt_num(shortfall)}")
+
+    # build message
+    lines = [f"🚨 <b>Rebalance Alert</b>  |  {regime_badge}",
+             f"<b>Routing base:</b> {base}"]
+
+    if sells_block or buys_block:
+        lines.append("")  # spacing
+        if sells_block: lines.append(sells_block)
+        if buys_block:  lines.append(buys_block)
+    else:
+        lines += ["", "• No trades needed 🎉 Portfolio is aligned with targets."]
+
+    if footer:
+        lines += ["", *footer]
+
+    if rationale:
+        lines += ["", f"<b>Rationale:</b> {rationale}"]
+
+    return "\n".join(lines)
 
 # ─────────────────────────────────────────────────────────────
 # Agent setup
@@ -732,6 +947,102 @@ try:
 except Exception:
     pass
 
+class TelegramUpdate(Model):
+    # very loose schema—just enough to parse what we need
+    update_id: Optional[int] = None
+    message: Optional[Dict[str, Any]] = None
+
+class Ok(Model):
+    ok: bool
+
+def _tg_chat_and_text(u: Dict[str, Any]) -> tuple[Optional[str], str]:
+    msg = (u or {}).get("message") or {}
+    chat = (msg.get("chat") or {}).get("id")
+    text = (msg.get("text") or "") or ""
+    return (str(chat) if chat is not None else None, text)
+
+@agent.on_rest_post("/telegram/webhook", TelegramUpdate, Ok)
+async def telegram_webhook(ctx: Context, body: TelegramUpdate) -> Ok:
+    # optional shared-secret check: require ?secret=... on webhook URL
+    if WEBHOOK_SECRET:
+        try:
+            from starlette.requests import Request  # uAgents uses Starlette under the hood
+            req: Request = ctx.request  # type: ignore
+            if req.query_params.get("secret") != WEBHOOK_SECRET:
+                ctx.logger.warning("Telegram webhook secret mismatch")
+                return Ok(ok=True)  # return 200 to keep Telegram happy, but ignore
+        except Exception:
+            pass
+
+    payload = json.loads(body.model_dump_json())
+    chat_id, text = _tg_chat_and_text(payload)
+    if not chat_id:
+        return Ok(ok=True)
+
+    text = text.strip()
+    # Expect: "/start <token>"
+    if text.startswith("/start"):
+        parts = text.split(maxsplit=1)
+        tok = parts[1].strip() if len(parts) > 1 else ""
+        ok, wallet, nickname = _consume_link_token(tok) if tok else (False, None, "")
+        if ok and wallet:
+            # Call *our own* onboard endpoint internally
+            # We already are the port agent, so just write directly to users DB for speed:
+            db = load_users()
+            # dedupe by wallet
+            for uid, u in db["users"].items():
+                if u["wallet_address"].lower() == wallet.lower():
+                    u["telegram_chat_id"] = chat_id
+                    if nickname:
+                        u["nickname"] = nickname
+                    save_users(db)
+                    if bot:
+                        try:
+                            await bot.send_message(chat_id=chat_id, text="✅ Linked! You can now enable Vacation Mode.")
+                        except Exception:
+                            pass
+                    return Ok(ok=True)
+
+            # New user record if wallet wasn’t onboarded yet
+            uid = next_user_id(db)
+            db["users"][str(uid)] = {
+                "wallet_address": wallet,
+                "telegram_chat_id": chat_id,
+                "nickname": nickname or "",
+                "is_active": False,
+                "daily_summary_hour_utc": 9,
+                "alert_threshold": DEFAULT_ALERT_THRESHOLD,
+                "next_summary_at": None,
+                "last_alert_at": None,
+                "balances_json": None,
+                "last_plan_json": None,
+                "last_rationale": None,
+                "last_regime": None,
+            }
+            save_users(db)
+            if bot:
+                try:
+                    await bot.send_message(chat_id=chat_id, text="✅ Linked! Set balances & enable Vacation Mode in the app.")
+                except Exception:
+                    pass
+            return Ok(ok=True)
+
+        # Bad token
+        if bot:
+            try:
+                await bot.send_message(chat_id=chat_id, text="⚠️ Invalid or expired link. Please reconnect from the app.")
+            except Exception:
+                pass
+        return Ok(ok=True)
+
+    # Optional: simple /ping
+    if text == "/ping" and bot:
+        try:
+            await bot.send_message(chat_id=chat_id, text="pong")
+        except Exception:
+            pass
+
+    return Ok(ok=True)
 # ─────────────────────────────────────────────────────────────
 # Startup / message handlers (raw cache)
 # ─────────────────────────────────────────────────────────────
@@ -744,6 +1055,14 @@ async def on_start(ctx: Context):
     ctx.logger.info(f"Preview Cache: {PREVIEW_CACHE_PATH}")
     ctx.logger.info(f"Users DB: {USERS_DB_PATH}")
     _ = load_users()
+
+@agent.on_rest_post("/telegram/link", LinkBody, LinkResp)
+async def telegram_link(ctx: Context, body: LinkBody) -> LinkResp:
+    if not BOT_USERNAME:
+        return LinkResp(ok=False, error="BOT username not configured")
+    tok = _mint_link_token(body.wallet_address, body.nickname or "", ttl_sec=900)
+    deep = f"https://t.me/{BOT_USERNAME}?start={quote_plus(tok)}"
+    return LinkResp(ok=True, url=deep, token=tok)
 
 @agent.on_message(model=RebalanceCheckResponse)
 async def on_reply(ctx: Context, sender: str, msg: RebalanceCheckResponse):
@@ -965,6 +1284,8 @@ async def prefs_body(ctx: Context, body: PrefsBody) -> OkResp:
         u["next_summary_at"] = iso(target)
 
     save_users(db)
+    if body.active is True:
+        await _send_summary_now(ctx, body.user_id, u)
     return OkResp(ok=True)
 
 @agent.on_rest_post("/users/vacation/start", StartStopBody, OkResp)
@@ -981,6 +1302,7 @@ async def vacation_start(ctx: Context, body: StartStopBody) -> OkResp:
         target += _dt.timedelta(days=1)
     u["next_summary_at"] = iso(target)
     save_users(db)
+    await _send_summary_now(ctx, body.user_id, u)
     return OkResp(ok=True)
 
 @agent.on_rest_post("/users/vacation/stop", StartStopBody, OkResp)

@@ -136,3 +136,73 @@ bhanusaienamala@Bhanus-MacBook-Pro ~ % curl -s -X POST https://ethonline2025.onr
   "rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Combined risks derived from peg⊕sentiment. Regime=GREEN, liquidity gate applied if deviation>0.30%.",
   "error": null
 }
+
+//Onboard a user
+curl -s -X POST "<BASE>/users/onboard" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "wallet_address": "0xabc1234567890000000000000000000000000000",
+    "telegram_chat_id": "",
+    "nickname": "Alice"
+  }' | jq
+# → { "ok": true, "user_id": 1, "error": null }
+
+//record user base_balance_start (get balances from metamask injected)
+curl -s -X POST "<BASE>/users/balances" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 1,
+    "usdc_balance": 3000,
+    "usdt_balance": 2000,
+    "dai_balance": 1250,
+    "fdusd_balance": 750,
+    "busd_balance": 625,
+    "tusd_balance": 375,
+    "usdp_balance": 500,
+    "pyusd_balance": 250,
+    "usdd_balance": 1000,
+    "gusd_balance": 250,
+    "quote_amount": 1000
+  }' | jq
+
+
+//LINKING TELEGRAM
+start backend with ./run.sh
+(1) User clicks "Connect Telegram" => call below api
+
+curl -s -X POST "http://127.0.0.1:8011/telegram/link" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "wallet_address": "0xAABBccddeeff0011223344556677889900aAbBcC",
+    "nickname": "Alice"
+  }' | jq
+
+response = 
+
+{
+  "ok": true,
+  "url": "https://t.me/MyPegBot?start=eyJ...",
+  "token": "eyJ..."
+}
+
+	•	Frontend: window.open(resp.url, "_blank").
+	•	User taps Start in Telegram; Telegram hits your webhook; backend consumes the token and stores the user’s chat_id.
+
+(2) Poll the backend until connected:
+
+curl -s -X POST "http://127.0.0.1:8011/users/status" \
+  -H "Content-Type: application/json" \
+  -d '{ "user_id": 1 }' | jq
+
+When it returns ok:true, the Telegram chat is linked.  
+
+//vacation mode on and off
+
+curl -s -X POST "<BASE>/users/prefs" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 1,
+    "active": true,
+    "alert_threshold": "GREEN",
+    "daily_summary_hour_utc": 9
+  }' | jq

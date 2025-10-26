@@ -1,9 +1,11 @@
 # run.py
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-# Load environment early so seed and mailbox are in place
-load_dotenv()
+# Always try to load the *root* .env by searching upward from CWD
+dotenv_path = find_dotenv(filename=".env", usecwd=True)
+if dotenv_path:
+    load_dotenv(dotenv_path, override=False)
 
 from agent import agent  # noqa: E402
 

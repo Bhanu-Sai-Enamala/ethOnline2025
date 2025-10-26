@@ -962,6 +962,27 @@ def _tg_chat_and_text(u: Dict[str, Any]) -> tuple[Optional[str], str]:
     text = (msg.get("text") or "") or ""
     return (str(chat) if chat is not None else None, text)
 
+class ResolveBody(Model):
+    wallet_address: str
+
+class ResolveResp(Model):
+    ok: bool
+    status: str  # "linked" or "pending"
+    user_id: Optional[int] = None
+    error: Optional[str] = None
+
+@agent.on_rest_post("/users/resolve", ResolveBody, ResolveResp)
+async def users_resolve(ctx: Context, body: ResolveBody) -> ResolveResp:
+    db = load_users()
+    for uid, u in db["users"].items():
+        if u.get("wallet_address","").lower() == body.wallet_address.lower():
+            # chat id present -> linked
+            if u.get("telegram_chat_id"):
+                return ResolveResp(ok=True, status="linked", user_id=int(uid))
+            return ResolveResp(ok=True, status="pending", user_id=int(uid))
+    # not seen yet
+    return ResolveResp(ok=True, status="pending", user_id=None)
+
 @agent.on_rest_post("/telegram/webhook", TelegramUpdate, Ok)
 async def telegram_webhook(ctx: Context, body: TelegramUpdate) -> Ok:
     # optional shared-secret check: require ?secret=... on webhook URL

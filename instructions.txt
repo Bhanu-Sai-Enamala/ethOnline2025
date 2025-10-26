@@ -136,3 +136,54 @@ bhanusaienamala@Bhanus-MacBook-Pro ~ % curl -s -X POST https://ethonline2025.onr
   "rationale": "Reasoner: Knowledge-graph mode: MeTTa policy used. Combined risks derived from peg⊕sentiment. Regime=GREEN, liquidity gate applied if deviation>0.30%.",
   "error": null
 }
+
+
+////telegram integration steps //////
+
+//Button = connect telegram 
+trigger :
+curl -s -X POST https://ethonline2025-25dr.onrender.com/telegram/link \
+  -H "Content-Type: application/json" \
+  -d '{"wallet_address":"$WALLET","nickname":"$DISPLAY_NAME"}' | jq .
+
+{ "ok": true, "url": "https://t.me/<bot>?start=TOKEN", "token": "TOKEN" }
+User taps Start in Telegram → auto-registered.
+
+2) After user taps “Start” in Telegram
+	•	Action: Poll backend to see if wallet is linked and get the user_id.
+	•	FE: POST /users/resolve with wallet; if status=linked, grab user_id.
+
+  curl -s -X POST https://ethonline2025-25dr.onrender.com/users/resolve \
+  -H "Content-Type: application/json" \
+  -d '{"wallet_address":"$WALLET"}' | jq .
+  response:{ "ok": true, "status": "linked", "user_id": 2 }
+
+//vacation mode on and off toggle
+to On 
+inputs : alert_threshold, daily summary time
+# Save balances
+curl -s -X POST https://ethonline2025-25dr.onrender.com/users/balances \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": $USER_ID,
+    "usdc_balance":1200,"usdt_balance":800,"dai_balance":500,
+    "fdusd_balance":300,"busd_balance":250,"tusd_balance":150,
+    "usdp_balance":200,"pyusd_balance":100,"usdd_balance":400,"gusd_balance":100,
+    "quote_amount":1000
+  }' | jq .
+
+# Turn on + set prefs (also triggers an immediate summary)
+curl -s -X POST https://ethonline2025-25dr.onrender.com/users/prefs \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":'$USER_ID',"active":true,"alert_threshold":"GREEN","daily_summary_hour_utc":9}' | jq .
+
+vacation mode toggle off
+# Simple OFF
+curl -s -X POST https://ethonline2025-25dr.onrender.com/users/vacation/stop \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":'$USER_ID'}' | jq .
+
+# Or via prefs
+curl -s -X POST https://ethonline2025-25dr.onrender.com/users/prefs \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":'$USER_ID',"active":false}' | jq .

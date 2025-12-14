@@ -1,4 +1,25 @@
-# 🧠 Stabilize Your Stablecoins? Hell Yeah.
+<div align="center">
+  <a href="https://ethglobal.com/showcase/stableguard-ai-fn85z">
+    <img src="https://img.shields.io/badge/ETHGlobal-ETHOnline%202025-5E5BFF?style=for-the-badge&logo=ethereum&logoColor=white" alt="ETHOnline 2025" />
+  </a>
+  <a href="https://ethglobal.com/showcase/stableguard-ai-fn85z">
+    <img src="https://img.shields.io/badge/Project-StableGuard.AI-f97316?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="StableGuard.AI Showcase" />
+  </a>
+  <a href="https://ethglobal.b0bd725bc77a3ea7cd3826627d01fcb6.r2.cloudflarestorage.com/certificates/1247002/certificate.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dd28f7ba85ca3162a53d5c60b5f3dd05%2F20251214%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251214T014439Z&X-Amz-Expires=3600&X-Amz-Signature=6e0952e4a217f571d1e4790ee6ee9b5fee3b13f09766d593a1b2584db10becda&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject">
+    <img src="https://img.shields.io/badge/Award-Best%20Use%20of%20ASI%20Alliance-00C9A7?style=for-the-badge&logo=starship&logoColor=white" alt="Best use of ASI Alliance" />
+  </a>
+  <a href="https://www.linkedin.com/posts/fetch-ai-innovation-lab_hackathon-innovation-fetchai-activity-7390326776071290880-8nLg/?utm_source=social_share_send&utm_medium=android_app&rcm=ACoAAEHrS9gBFVHaOo1OoyfGfghAjEhRrKD_F8c&utm_campaign=whatsapp">
+    <img src="https://img.shields.io/badge/LinkedIn-FetchAI%20Innovation%20Lab-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Prize Announcement" />
+  </a>
+  <a href="https://x.com/fetch_ai_IL/status/1984561154883047708?t=v4ZePKZUBRAVRah8fAl15A&s=19">
+    <img src="https://img.shields.io/badge/X-FetchAI%20Innovation%20Lab-111111?style=for-the-badge&logo=x&logoColor=white" alt="X Prize Announcement" />
+  </a>
+</div>
+
+> 🏆 **StableGuard.AI** won **Best Use of Artificial Superintelligence Alliance** at ETHOnline 2025, recognized by ETHGlobal co-founder Kartik Talwar.  
+> 📜 [Official ETHGlobal Certificate](https://ethglobal.b0bd725bc77a3ea7cd3826627d01fcb6.r2.cloudflarestorage.com/certificates/1247002/certificate.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dd28f7ba85ca3162a53d5c60b5f3dd05%2F20251214%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251214T014439Z&X-Amz-Expires=3600&X-Amz-Signature=6e0952e4a217f571d1e4790ee6ee9b5fee3b13f09766d593a1b2584db10becda&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject) • 📣 [LinkedIn Announcement](https://www.linkedin.com/posts/fetch-ai-innovation-lab_hackathon-innovation-fetchai-activity-7390326776071290880-8nLg/?utm_source=social_share_send&utm_medium=android_app&rcm=ACoAAEHrS9gBFVHaOo1OoyfGfghAjEhRrKD_F8c&utm_campaign=whatsapp) • 🐦 [X Announcement](https://x.com/fetch_ai_IL/status/1984561154883047708?t=v4ZePKZUBRAVRah8fAl15A&s=19)
+
+#  Stabilize Your Stablecoins.
 
 Welcome to **StableGuard**, your AI-powered sentinel for stablecoin health, balance, and peace of mind.
 
@@ -8,7 +29,7 @@ When sentiment turns red, StableGuard whispers before chaos hits.
 
 ---
 
-## 🚀 What Is StableGuard?
+##  What Is StableGuard?
 
 **StableGuard** is an intelligent, multi-agent system that monitors, scores, and dynamically guides your stablecoin portfolio — keeping your peg steady, liquidity optimal, and exposure balanced.
 
@@ -16,7 +37,7 @@ Built for **EthOnline 2025**, it fuses **autonomous AI agents**, **decentralized
 
 ---
 
-## 🏗️ Architecture Overview
+##  Architecture Overview
 
 ![StableGuard Architecture](./architecture.png)
 
@@ -49,7 +70,7 @@ If risk escalates, StableGuard sends you a **Telegram alert** with a **complete 
 
 ---
 
-## 🧠 Knowledge Graph Reasoner Agent
+##  Knowledge Graph Reasoner Agent
 
 The **Reasoner Agent** is the collective brain behind StableGuard.  
 It correlates patterns across agents, past incidents, and live data streams — remembering the invisible signals that precede depegs.
@@ -69,7 +90,7 @@ The Reasoner doesn’t just detect — it explains.
 
 ---
 
-## 🏖️ Vacation Mode (No Auto-Rebalance)
+##  Vacation Mode (No Auto-Rebalance)
 
 When “Vacation Mode” is toggled **ON**, your last-known balances and stablecoin exposures are saved.  
 From then on:
@@ -85,7 +106,7 @@ This lets you go off-grid or on vacation while your **AI sentinels guard your st
 
 ---
 
-## 📡 Agent-to-Agent Communication
+##  Agent-to-Agent Communication
 
 StableGuard’s backbone runs on **uAgents Mailbox** — a peer-to-peer message layer enabling decentralized coordination.  
 Each agent signs and verifies messages cryptographically to ensure integrity.
@@ -100,7 +121,7 @@ This ensures sub-second responsiveness while preserving modular isolation.
 
 ---
 
-## 🔔 Telegram Integration
+##  Telegram Integration
 
 Stay informed with **real-time alerts** via Telegram:  
 - Regime shifts (🟢→🟡→🔴)  
@@ -111,7 +132,7 @@ Your Telegram identity is cryptographically linked to your wallet address — ke
 
 ---
 
-## ⚙️ Tech Stack
+##  Tech Stack
 
 - 🧱 **Backend:** Python, FastAPI-style uAgents REST server  
 - 🤖 **Agents:** uAgents framework (Almanac 2.3.0)  
@@ -122,7 +143,7 @@ Your Telegram identity is cryptographically linked to your wallet address — ke
 
 ---
 
-## 🧩 Repository Layout
+##  Repository Layout
 
 ```
 ├── agents/
@@ -139,7 +160,7 @@ Your Telegram identity is cryptographically linked to your wallet address — ke
 
 ---
 
-## 🏁 Closing Note
+##  Closing Note
 
 StableGuard isn’t just automation — it’s vigilance turned into code.  
 Every rebalance is a decision, every decision is **data-driven**.
